@@ -108,6 +108,31 @@ export default {
   await vitest.waitForStdout('2 passed')
 })
 
+// #11054
+test('editing force rerun trigger in a dot-prefixed directory reruns all tests', async () => {
+  const { vitest, fs } = await testUtils.runInlineTests({
+    ...baseFixture,
+    '.force-watch/trigger.js': 'export const trigger = false\n',
+    'vitest.config.ts': /* ts */ `
+export default {
+  test: {
+    forceRerunTriggers: ['**/trigger.js'],
+  },
+}
+`,
+  }, { watch: true })
+
+  await vitest.waitForStdout('Waiting for file changes...')
+  vitest.resetOutput()
+
+  fs.editFile('.force-watch/trigger.js', modifyContent)
+
+  await vitest.waitForStdout('RERUN  ../.force-watch/trigger.js')
+  await vitest.waitForStdout('example.test.ts')
+  await vitest.waitForStdout('math.test.ts')
+  await vitest.waitForStdout('2 passed')
+})
+
 test('editing test file triggers re-run', async () => {
   const { vitest, fs } = await testUtils.runInlineTests(baseFixture, { watch: true })
 

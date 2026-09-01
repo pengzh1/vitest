@@ -32,6 +32,16 @@ describe.skipIf(process.env.ECOSYSTEM_CI)('forceRerunTrigger', () => {
     const { stdout } = await run()
     expect(stdout).toContain('No test files found, exiting with code 0')
   })
+
+  // #11054
+  it('should run the whole test suite if the trigger file is inside a dot-prefixed directory', async () => {
+    createFile('fixtures/git-changed/related/.dot-trigger/rerun.temp', '')
+    const { stdout, stderr } = await run()
+    expect(stderr).toBe('')
+    expect(stdout).toContain('1 passed')
+    expect(stdout).toContain('related.test.ts')
+    expect(stdout).not.toContain('not-related.test.ts')
+  })
 })
 
 it.skipIf(process.env.ECOSYSTEM_CI)('related correctly runs only related tests', async () => {
